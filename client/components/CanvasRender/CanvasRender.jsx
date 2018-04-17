@@ -4,6 +4,10 @@ import * as THREE from 'three';
 
 class CreationBox extends Component {
 
+  static defaultProps = {
+    cameraDistance: 5,
+  }
+
   constructor(props, context) {
     super(props, context);
 
@@ -11,7 +15,11 @@ class CreationBox extends Component {
     // React will think that things have changed when they have not.
 
     this.state = {
-      cameraPosition: new THREE.Vector3(0, 0, 5),
+      cameraAngles: {
+        y: 0, // x, z
+        perspective: 0, // x, y, z
+      },
+      cameraPosition: new THREE.Vector3(0, 0, this.props.cameraDistance),
     };
 
     this._onAnimate = () => {
@@ -30,14 +38,23 @@ class CreationBox extends Component {
     };
   };
 
+  angleToPosition = (y, perspective = 0) => {
+    this.setState({
+      cameraAngles: {y, perspective},
+      cameraPosition: new THREE.Vector3(
+        Math.cos(y*(Math.PI*2)/360)*this.props.cameraDistance * Math.cos(perspective*(Math.PI*2)/360),
+        Math.sin(perspective*(Math.PI*2)/360)*this.props.cameraDistance,
+        Math.sin(y*(Math.PI*2)/360)*this.props.cameraDistance * Math.cos(perspective*(Math.PI*2)/360)
+      ),
+    });
+  }
 
-
-  onChangeCameraXAxis = (axisValue) => {
-    //this.setState({cameraRotation : })
+  onChangeCameraPerspective = (e) => {
+    this.angleToPosition(this.state.cameraAngles.y, e.target.value);
   };
 
-  onChangeCameraYAxis = (axisValue) => {
-    console.log(axisValue);
+  onChangeCameraYAxis = (e) => {
+    this.angleToPosition(e.target.value, this.state.cameraAngles.perspective);
   };
 
   render() {
@@ -46,8 +63,8 @@ class CreationBox extends Component {
 
     return (
       <section className="canvasrender">
-        <input id="cameraXAxis" type="range" min={0} max={360} value={0} onChange={this.onChangeCameraXAxis} />
-        <input id="cameraYAxis" type="range" min={-90} max={90} value={0} onChange={this.onChangeCameraYAxis}/>
+        <input id="cameraYAxis" type="range" min={0} max={360} value={this.state.cameraAngles.y} onChange={this.onChangeCameraYAxis} />
+        <input id="cameraPerspective" type="range" min={-90} max={90} value={this.state.cameraAngles.perspective} onChange={this.onChangeCameraPerspective} />
         <React3
           mainCamera="camera"
           width={width}
@@ -66,6 +83,28 @@ class CreationBox extends Component {
 
               position={this.state.cameraPosition}
             />
+
+            <ambientLight
+              color={0x505050}
+            />
+
+            <spotLight
+              color={0xffffff}
+              intensity={1.5}
+              position={this.state.cameraPosition}
+              lookAt={new THREE.Vector3(0, 0, 0)}
+
+              castShadow
+              shadowCameraNear={200}
+              shadowCameraFar={10000}
+              shadowCameraFov={50}
+
+              shadowBias={-0.00022}
+
+              shadowMapWidth={2048}
+              shadowMapHeight={2048}
+            />
+
             <mesh>
               <boxGeometry
                 width={1}
@@ -73,7 +112,8 @@ class CreationBox extends Component {
                 depth={1}
               />
               <meshBasicMaterial
-                color={0x00ff00}
+                color={0x009900}
+                wireframe={false}
               />
             </mesh>
           </scene>
