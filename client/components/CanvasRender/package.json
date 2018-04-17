@@ -1,0 +1,6 @@
+{
+  "name": "CanvasRender",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./CanvasRender.jsx"
+}
