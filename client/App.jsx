@@ -9,7 +9,9 @@ export default class App extends Component {
     return (
       <main className="main-wrapper">
         <Header />
-        {this.props.children}
+        <div className="container-fluid">
+          {this.props.children}
+        </div>
         <Footer />
       </main>
     );

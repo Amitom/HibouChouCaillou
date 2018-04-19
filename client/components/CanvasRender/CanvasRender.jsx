@@ -6,7 +6,14 @@ import * as THREE from 'three';
 class CreationBox extends Component {
 
   static defaultProps = {
-    cameraDistance: 2,
+    canvas:{
+      height: 500,
+      width: 500,
+    },
+    cameraDistance: 3,
+    material: {
+      reflectiveIndex: 1.54,
+    },
     texture: {
       wire: false,
     },
@@ -19,11 +26,9 @@ class CreationBox extends Component {
     // React will think that things have changed when they have not.
 
     this.state = {
-      cameraAngles: {
-        y: 0, // x, z
-        perspective: 0, // x, y, z
-      },
-      cameraPosition: new THREE.Vector3(0, 0, this.props.cameraDistance),
+      canvas: props.canvas,
+      ...this.angleToPosition(45,30),
+      material: props.material,
       texture: props.texture,
     };
 
@@ -44,15 +49,15 @@ class CreationBox extends Component {
   };
 
   angleToPosition = (y, perspective = 0) => {
-    this.setState({
+    return {
       cameraAngles: {y, perspective},
       cameraPosition: new THREE.Vector3(
         Math.cos(y*(Math.PI*2)/360)*this.props.cameraDistance * Math.cos(perspective*(Math.PI*2)/360),
         Math.sin(perspective*(Math.PI*2)/360)*this.props.cameraDistance,
         Math.sin(y*(Math.PI*2)/360)*this.props.cameraDistance * Math.cos(perspective*(Math.PI*2)/360)
       ),
-    });
-  }
+    };
+  };
 
   onChangeCameraPerspective = (e) => {
     let angle = e.target.value;
@@ -64,12 +69,12 @@ class CreationBox extends Component {
       angle = 90;
     }
 
-    this.angleToPosition(this.state.cameraAngles.y, angle);
+    this.setState(this.angleToPosition(this.state.cameraAngles.y, angle));
   };
 
   onChangeCameraYAxis = (e) => {
     let angle = e.target.value;
-    
+
     if (angle < 0) {
       angle = 0;
     }
@@ -77,7 +82,7 @@ class CreationBox extends Component {
       angle = 360;
     }
 
-    this.angleToPosition(angle, this.state.cameraAngles.perspective);
+    this.setState(this.angleToPosition(angle, this.state.cameraAngles.perspective));
   };
 
   onWireTextureChange = (e) => {
@@ -86,14 +91,22 @@ class CreationBox extends Component {
     this.setState({
       texture,
     })
-  }
+  };
 
   render() {
-    const width = window.innerWidth; // canvas width
-    const height = window.innerHeight; // canvas height
+    const box = {
+      color: 0x330033,
+      height: 30,
+      width: 29,
+    };
+
+    const {
+      height,
+      width,
+    } = this.state.canvas;
 
     return (
-      <section className="canvasrender">
+      <section className="canvasrender" ref={(e) => this.wrapper = e}>
         <div className="form-group row">
           <label className="col-sm-2">
             <FormattedMessage id="canvasrender.horizontalRotation" />
@@ -110,9 +123,9 @@ class CreationBox extends Component {
           <div className="col-sm-10">
             <input id="cameraPerspective" className="form-control-range" type="range" min={-90} max={90} value={this.state.cameraAngles.perspective} onChange={this.onChangeCameraPerspective} />
             <input type="number" min={-90} max={90} value={this.state.cameraAngles.perspective} onChange={this.onChangeCameraPerspective} />
-           </div>
-         </div>
-        <div className="form-group row"> 
+          </div>
+        </div>
+        <div className="form-group row">
           <label className="col-sm-2">
             <FormattedMessage id="canvasrender.wireTexture" />
           </label>
@@ -125,6 +138,8 @@ class CreationBox extends Component {
           width={width}
           height={height}
           shadowMapEnabled
+          antialias
+          clearColor={0xf0f0f0}
 
           onAnimate={this._onAnimate}
         >
@@ -138,28 +153,120 @@ class CreationBox extends Component {
               lookAt={new THREE.Vector3(0, 0, 0)}
 
               position={this.state.cameraPosition}
+            >
+            </perspectiveCamera>
+
+            <ambientLight intensity={.8} />
+
+            <pointLight
+              color={0xFFFFFF}
+              distance={2000}
+              position={new THREE.Vector3(0, 10, 0)}
             />
 
-            <ambientLight
-              color={0x505050}
+            <pointLight
+              color={0xFFFFFF}
+              distance={100}
+              position={this.state.cameraPosition}
             />
 
-            <spotLight
-              color={0xffffff}
-              intensity={1.5}
-              position={new THREE.Vector3(0, 0, this.props.cameraDistance)}
-              lookAt={new THREE.Vector3(0, 0, 0)}
-
+            <mesh
+              key="boxtop"
               castShadow
-              shadowCameraNear={20}
-              shadowCameraFar={100}
-              shadowCameraFov={5}
+              receiveShadow
+              rotation={new THREE.Euler(0,2*Math.PI/8,0,"XYZ")}
+              position={new THREE.Vector3(0, box.width / 2, 0)}
+              lookAt={new THREE.Vector3(0, 0, 0)}
+            >
+              <planeGeometry
+                height={box.width}
+                width={box.width}
+              />
+              <meshPhongMaterial
+                color={box.color}
+              />
+            </mesh>
 
-              shadowBias={-0.00022}
+            <mesh
+              key="boxbottom"
+              castShadow
+              receiveShadow
+              rotation={new THREE.Euler(0,2*Math.PI/4,0,"XYZ")}
+              position={new THREE.Vector3(0, box.width / -2, 0)}
 
-              shadowMapWidth={2048}
-              shadowMapHeight={2048}
-            />
+            >
+              <planeGeometry
+                height={box.width}
+                width={box.width}
+              />
+              <meshPhongMaterial
+                color={box.color}
+              />
+            </mesh>
+
+            <mesh
+              key="box0"
+              castShadow
+              receiveShadow
+              position={new THREE.Vector3(-10, 0, 10)}
+              lookAt={new THREE.Vector3(0, 0, 0)}
+            >
+              <planeGeometry
+                height={box.height}
+                width={box.width}
+              />
+              <meshPhongMaterial
+                color={box.color}
+              />
+            </mesh>
+
+            <mesh
+              key="box1"
+              castShadow
+              receiveShadow
+              position={new THREE.Vector3(-10, 0, -10)}
+              lookAt={new THREE.Vector3(0, 0, 0)}
+            >
+              <planeGeometry
+                height={box.height}
+                width={box.width}
+              />
+              <meshPhongMaterial
+                color={box.color}
+              />
+            </mesh>
+
+            <mesh
+              key="box2"
+              castShadow
+              receiveShadow
+              position={new THREE.Vector3(10, 0, -10)}
+              lookAt={new THREE.Vector3(0, 0, 0)}
+            >
+              <planeGeometry
+                height={box.height}
+                width={box.width}
+              />
+              <meshPhongMaterial
+                color={box.color}
+              />
+            </mesh>
+
+            <mesh
+              key="box3"
+              castShadow
+              receiveShadow
+              position={new THREE.Vector3(10, 0, 10)}
+              lookAt={new THREE.Vector3(0, 0, 0)}
+            >
+              <planeGeometry
+                height={box.height}
+                width={box.width}
+              />
+              <meshPhongMaterial
+                color={box.color}
+              />
+            </mesh>
 
             <mesh
               castShadow
@@ -170,8 +277,11 @@ class CreationBox extends Component {
                 height={1}
                 depth={1}
               />
-              <meshBasicMaterial
-                color={0x009900}
+              <meshPhongMaterial
+                reflectivity={this.state.material.reflectiveIndex}
+                color={0xffffff}
+                transparent
+                opacity={0.3}
                 wireframe={this.state.texture.wire}
               />
             </mesh>
