@@ -7,4 +7,5 @@ module.exports = {
   "canvasrender.verticalRotation": "Rotation verticale",
   "canvasrender.horizontalRotation": "Rotation horinzontale",
   "canvasrender.wireTexture": "Texture filaire",
+  "canvasrender.colorBox": "Couleur de la boîte",
 }
